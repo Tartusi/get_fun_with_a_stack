@@ -6,49 +6,55 @@
 #define STACK_SIZE 4096
 #define MAX_INST_LENGTH 256
 #define INT_SIZE sizeof(int)
-//#define DEBUG
+// #define DEBUG
 
-void* stack;
-void* stackPointer;
+void *stack;
+void *stackPointer;
 
 short checkState() {
-	if(stackPointer>=stack && stackPointer<stack+STACK_SIZE) return 1;
-	return 0;
+	if(stackPointer >= stack && stackPointer < stack + STACK_SIZE) {
+        return 1;
+    }
+	
+    return 0;
 }
 
 char** readInstruction(FILE* file){
-	
-	char* line=malloc(sizeof(char) * 256);
-	if (!fgets(line,MAX_INST_LENGTH ,file)) {
+	char *line = malloc(sizeof(char) * 256);
+
+	if (!fgets(line, MAX_INST_LENGTH, file)) {
 		return NULL;
 	}
-	
-	char** tabInst = malloc(2*sizeof(char*));  // on n'a pas besoin de stocker plus de deux instructions dans le jeu d'instruction actuel	
-	strtok(line," ");
-	tabInst[0] = strtok(NULL," ");
-	tabInst[1] = strtok(NULL," ");
-	return tabInst;
-}
-short push(int value) {
 
+	// on n'a pas besoin de stocker plus de deux instructions dans le jeu d'instruction actuel
+	char **tabInst = malloc(2 * sizeof(char *));
+    strtok(line," ");
+	
+    tabInst[0] = strtok(NULL, " ");
+	tabInst[1] = strtok(NULL, " ");
+	
+    return tabInst;
+}
+
+short push(int value) {
 	if(checkState()) {
 		*(int *)stackPointer = value;
 		stackPointer += INT_SIZE;
 		return 1;
-	}
-	else {
-		printf("Underflow or overflow in PUSH, stoping interpretation\n");
+	} else {
+		printf("Underflow or overflow in PUSH, stopping interpretation\n");
 		return 0;
 	}
 
 }
+
 short pop(int* value) {
-	stackPointer=stackPointer - INT_SIZE;
-	if(checkState()) {
-		*value=*(int*)stackPointer;
+	stackPointer = stackPointer - INT_SIZE;
+	
+    if(checkState()) {
+		*value = *(int*) stackPointer;
 		return 1;
-	}
-	else {
+	} else {
 		printf("Underflow or overflow in POP, stoping interpretation\n");
 		return 0;
 	}
@@ -59,8 +65,7 @@ short write(){
 	if(pop(&value)) {
 		printf("%d\n", value);
 		return 1;
-	}
-	else {
+	} else {
 		printf("Error in WRITE");
 		return 0;
 	}
@@ -69,32 +74,34 @@ short write(){
 short dup(){
 	int value;
 	return pop(&value) | push(value) | push(value);
-	return 0;
 }
 
 short add(){
 	int value[2];
-	return pop(&value[0]) | pop(&value[1]) | push(value[0]+value[1]);
+	return pop(&value[0]) | pop(&value[1]) | push(value[0] + value[1]);
 }
 
 short mul(){
 	int value[2];
-	return pop(&value[0]) | pop(&value[1]) | push(value[0]*value[1]);
+	return pop(&value[0]) | pop(&value[1]) | push(value[0] * value[1]);
 }
 
 short read(){
 	int value;
+
 	#ifdef DEBUG
 		printf("Integer expected\n");
 	#endif
+
 	if(scanf("%d", &value)){
 		return push(value);
 	}
+
 	printf("Error reading number, stoping\n");
 	return 0;
 }
 
-short execInstructionWrapper(char** tabInst){
+short execInstructionWrapper(char **tabInst){
 	switch (tabInst[0][0]) {
 		case 'P':
 			if(!tabInst[1]) {
@@ -120,31 +127,29 @@ short execInstructionWrapper(char** tabInst){
 	}
 	return 0;
 }
+
 short execInstruction(char** tabInst){
 	short retval;
 	if (tabInst && tabInst[0]){
 		#ifdef DEBUG
-			printf("%s",tabInst[0]);
+			printf("%s", tabInst[0]);
 		#endif
 
 		retval=execInstructionWrapper(tabInst);
 		free(tabInst);
 	}
 	return retval;
-}
-
-				
-		
+}						
 
 int main(int argc, char** argv){
-	
 	if (argc != 2) {
 		printf("Usage: %s filetointerpret\n",argv[0]);
 		return 0;
 	}
+
 	stack=malloc(STACK_SIZE);
 	stackPointer=stack;
-	FILE* file=fopen(argv[1],"r");
+	FILE* file=fopen(argv[1], "r");
 
 	#ifdef DEBUG
 		printf("Starting of parsing\n");
@@ -152,7 +157,8 @@ int main(int argc, char** argv){
 	
 	while(execInstruction(readInstruction(file)));
 	free(stack);	
-	#ifdef DEBUG
+	
+    #ifdef DEBUG
 		printf("End of parsing\n");
 	#endif
 }
